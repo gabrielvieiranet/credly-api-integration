@@ -11,6 +11,11 @@ if [ -z "$TOKEN" ]; then
     echo "Usage: $0 <REAL_TOKEN> or set CREDLY_API_TOKEN env var"
     exit 1
 fi
+
+# Configure AWS CLI for LocalStack
+export AWS_ACCESS_KEY_ID=test
+export AWS_SECRET_ACCESS_KEY=test
+export AWS_DEFAULT_REGION=us-east-1
 ENDPOINT_URL="http://localhost:4566"
 
 echo "Updating secret in LocalStack..."
