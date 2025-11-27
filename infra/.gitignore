@@ -2,7 +2,7 @@
 *.tfstate
 *.tfstate.*
 .terraform/
-.terraform.lock.hcl
+# Lock file should be committed for cross-platform compatibility
 override.tf
 crash.log
 crash.*.log
