@@ -1,0 +1,11 @@
+# .gitignore
+*.tfstate
+*.tfstate.*
+.terraform/
+.terraform.lock.hcl
+override.tf
+crash.log
+crash.*.log
+*.tfvars
+!terraform.tfvars.example
+lambda_dummy.zip
