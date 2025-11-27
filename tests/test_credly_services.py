@@ -1,5 +1,3 @@
-from unittest.mock import MagicMock, call
-
 import pytest
 
 from services.credly_badges_service import CredlyBadgesService
@@ -26,6 +24,11 @@ def mock_s3_writer_templates(mocker):
     return mocker.patch("services.credly_templates_service.s3_writer")
 
 
+@pytest.fixture
+def mock_dynamodb_client(mocker):
+    return mocker.patch("services.credly_templates_service.dynamodb_client")
+
+
 def test_badges_mapping(mock_credly_client, mock_s3_writer):
     # Mock data
     mock_data = [
@@ -34,7 +37,7 @@ def test_badges_mapping(mock_credly_client, mock_s3_writer):
             "issued_to": "John Doe",
             "user": {"id": 999, "url": "http://user"},
             "badge_template": {"id": 55, "name": "Best Badge"},
-            "organization": {"id": 1, "name": "Acme"},
+            "issuer": {"entities": [{"id": 1, "name": "Acme"}]},
             "issued_at": "2023-01-01",
         }
     ]
@@ -44,9 +47,9 @@ def test_badges_mapping(mock_credly_client, mock_s3_writer):
     service.process("daily")
 
     # Verify S3 write
-    mock_s3_writer.write_json.assert_called()
-    args, _ = mock_s3_writer.write_json.call_args
-    table_name, data, _ = args
+    mock_s3_writer.write_parquet.assert_called()
+    args, _ = mock_s3_writer.write_parquet.call_args
+    table_name, data, _, _ = args
 
     assert table_name == "badges_emitidas"
     assert len(data) == 1
@@ -57,33 +60,47 @@ def test_badges_mapping(mock_credly_client, mock_s3_writer):
     assert item["organization_name"] == "Acme"
 
 
-def test_templates_flattening(mock_credly_client_templates, mock_s3_writer_templates):
+def test_templates_hash_validation(
+    mock_credly_client_templates, mock_s3_writer_templates, mock_dynamodb_client
+):
     mock_data = [
         {
             "id": 100,
             "name": "Template 1",
+            "updated_at": "2023-01-01T00:00:00",
             "skills": [{"name": "Python"}, {"name": "AWS"}],
             "badge_template_activities": [{"id": "a1", "title": "Activity 1"}],
         }
     ]
     mock_credly_client_templates.get_templates.return_value = [mock_data]
 
+    # Case 1: Hash mismatch (should write)
+    mock_dynamodb_client.get_metadata.return_value = {"payload_hash": "old_hash"}
+
     service = CredlyTemplatesService()
     service.process("daily")
 
     # Check calls
-    assert mock_s3_writer_templates.write_json.call_count >= 2
+    assert mock_s3_writer_templates.write_parquet.call_count >= 2
+    mock_dynamodb_client.update_metadata.assert_called_once()
 
-    # Inspect calls to ensure both tables were written
-    calls = mock_s3_writer_templates.write_json.call_args_list
-    tables_written = [c[0][0] for c in calls]
-    assert "badges_templates" in tables_written
-    assert "badges_templates_activities" in tables_written
+    # Verify update metadata call
+    args, _ = mock_dynamodb_client.update_metadata.call_args
+    assert args[0] == "badges_templates"
+    assert "payload_hash" in args[1]
 
-    # Check flattening of skills
-    # Find the call for templates
-    for args, _ in calls:
-        if args[0] == "badges_templates":
-            item = args[1][0]
-            assert item["skills"] == "Python;AWS"
-            assert item["badge_template_id"] == "100"
+    # Case 2: Hash match (should skip)
+    # Calculate expected hash for mock data
+    import hashlib
+
+    expected_hash = hashlib.sha256("100-2023-01-01T00:00:00".encode()).hexdigest()
+
+    mock_dynamodb_client.get_metadata.return_value = {"payload_hash": expected_hash}
+    mock_s3_writer_templates.reset_mock()
+    mock_dynamodb_client.reset_mock()
+
+    service.process("daily")
+
+    # Should NOT write to S3 or update DynamoDB
+    mock_s3_writer_templates.write_parquet.assert_not_called()
+    mock_dynamodb_client.update_metadata.assert_not_called()

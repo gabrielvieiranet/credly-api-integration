@@ -9,7 +9,5 @@ services:
       - "4510-4559:4510-4559" # external services port range
     environment:
       - DEBUG=${DEBUG-}
-      - LAMBDA_EXECUTOR=local
-      - LAMBDA_REMOTE_DOCKER=false
     volumes:
       - "${LOCALSTACK_VOLUME_DIR:-./volume}:/var/lib/localstack"

@@ -1,7 +1,9 @@
 import datetime
-from typing import Any, Dict, List
+import hashlib
+from typing import Any, Dict
 
 from clients.credly_client import credly_client
+from clients.dynamodb_client import dynamodb_client
 from utils.logger import logger
 from utils.s3_writer import s3_writer
 
@@ -18,22 +20,72 @@ class CredlyTemplatesService:
         params = {}
         today = datetime.date.today()
 
+        # Fetch all templates first to calculate hash
+        all_templates = []
+        params["page_size"] = 100  # Maximize page size for efficiency
+
+        page_url = None
+        pages_processed = 0
+        part_number = 1
+
+        while True:
+            items, next_page_url = credly_client.get_templates(
+                params, page_url=page_url
+            )
+
+            if items:
+                all_templates.extend(items)
+
+            pages_processed += 1
+
+            if page_limit and pages_processed >= page_limit:
+                logger.info(f"Page limit of {page_limit} reached. Stopping fetch.")
+                break
+
+            if not next_page_url:
+                break
+
+            page_url = next_page_url
+
+        # Calculate hash of the current dataset
+        # We use ID and updated_at to detect changes
+        hash_payload = []
+        for t in all_templates:
+            hash_payload.append(f"{t.get('id')}-{t.get('updated_at')}")
+
+        hash_payload.sort()  # Ensure consistent order
+        current_hash = hashlib.sha256("".join(hash_payload).encode()).hexdigest()
+
+        # Check against stored hash
+        metadata = dynamodb_client.get_metadata("badges_templates")
+        stored_hash = metadata.get("payload_hash")
+
+        if stored_hash == current_hash:
+            logger.info("No changes detected in templates. Skipping ingestion.")
+            return
+
+        logger.info(
+            f"Changes detected (Old: {stored_hash}, New: {current_hash}). Starting full load."
+        )
+
         # Clear partitions
         s3_writer.clear_partition("badges_templates", today)
         s3_writer.clear_partition("badges_templates_activities", today)
 
-        part_number = 1
-        pages_processed = 0
+        # Process and write data
+        # Since we already have all_templates in memory, we can process them directly
+        # If memory is a concern for very large datasets, we might need to re-fetch or stream,
+        # but for templates (usually thousands, not millions), memory should be fine.
 
-        for batch in credly_client.get_templates(params):
-            if page_limit and pages_processed >= page_limit:
-                logger.info(f"Page limit of {page_limit} reached. Stopping.")
-                break
+        # Chunk processing to avoid huge parquet files
+        chunk_size = 1000
+        for i in range(0, len(all_templates), chunk_size):
+            chunk = all_templates[i : i + chunk_size]
 
             mapped_templates = []
             mapped_activities = []
 
-            for item in batch:
+            for item in chunk:
                 mapped_templates.append(self._map_template(item))
                 mapped_activities.extend(self._extract_activities(item))
 
@@ -48,7 +100,16 @@ class CredlyTemplatesService:
                 )
 
             part_number += 1
-            pages_processed += 1
+
+        # Update metadata
+        dynamodb_client.update_metadata(
+            "badges_templates",
+            {
+                "payload_hash": current_hash,
+                "last_updated_at": datetime.datetime.now().isoformat(),
+                "record_count": len(all_templates),
+            },
+        )
 
     def _map_template(self, item: Dict[str, Any]) -> Dict[str, str]:
         owner = item.get("owner", {})

@@ -7,14 +7,22 @@ from utils.s3_writer import s3_writer
 
 
 class CredlyBadgesService:
-    def process(self, mode: str, page_limit: int = None):
+    def process(self, mode: str, page: str = None, is_first_page: bool = True) -> dict:
         """
-        Orchestrates fetching and saving badges.
-        mode: 'historical' or 'daily'
-        page_limit: Optional max number of pages to process
+        Processes a single page of badges.
+
+        Args:
+            mode: 'historical' or 'daily'
+            page: Optional page URL for continuation
+            is_first_page: Whether this is the first page (to clear partition)
+
+        Returns:
+            dict with:
+                - records_processed: int
+                - next_page: str | None
         """
         logger.info(
-            f"Starting Badges processing in {mode} mode (page_limit={page_limit})"
+            f"Starting Badges processing in {mode} mode (page={page}, is_first_page={is_first_page})"
         )
 
         params = {}
@@ -28,28 +36,21 @@ class CredlyBadgesService:
         elif mode == "historical":
             params["start_date"] = "2000-01-01 00:00:00"
 
-        # Clear partition before starting to ensure daily overwrite
-        s3_writer.clear_partition("badges_emitidas", today)
+        # Clear partition only on first page
+        if is_first_page:
+            s3_writer.clear_partition("badges_emitidas", today)
 
-        part_number = 1
-        pages_processed = 0
+        # Fetch single page
+        items, next_page_url = credly_client.get_badges(params, page_url=page)
 
-        # We will write each batch (page) as a separate parquet file
-        # Credly API pagination yields a list of items per page
-        for batch in credly_client.get_badges(params):
-            if page_limit and pages_processed >= page_limit:
-                logger.info(f"Page limit of {page_limit} reached. Stopping.")
-                break
+        # Process and write
+        if items:
+            mapped_batch = [self._map_badge(item) for item in items]
+            # Use timestamp-based part number to avoid collisions
+            part_number = int(datetime.datetime.now().timestamp() * 1000)
+            s3_writer.write_parquet("badges_emitidas", mapped_batch, today, part_number)
 
-            mapped_batch = [self._map_badge(item) for item in batch]
-
-            if mapped_batch:
-                s3_writer.write_parquet(
-                    "badges_emitidas", mapped_batch, today, part_number
-                )
-                part_number += 1
-
-            pages_processed += 1
+        return {"records_processed": len(items), "next_page": next_page_url}
 
     def _map_badge(self, item: Dict[str, Any]) -> Dict[str, str]:
         """
