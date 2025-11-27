@@ -45,8 +45,32 @@ sleep 2
 # ============================================
 
 echo ""
-echo "--- Initializing Terraform ---"
+echo "--- Checking Configuration Files ---"
 cd "$INFRA_DIR"
+
+# Check for terraform.tfvars
+if [ ! -f "terraform.tfvars" ]; then
+    echo "Creating terraform.tfvars from example..."
+    if [ -f "terraform.tfvars.example" ]; then
+        cp terraform.tfvars.example terraform.tfvars
+    else
+        echo "Error: terraform.tfvars.example not found!"
+        exit 1
+    fi
+fi
+
+# Check for override.tf (LocalStack configuration)
+if [ ! -f "override.tf" ]; then
+    echo "Creating override.tf from example..."
+    if [ -f "override.tf.example" ]; then
+        cp override.tf.example override.tf
+    else
+        echo "Warning: override.tf.example not found. LocalStack setup might fail."
+    fi
+fi
+
+echo ""
+echo "--- Initializing Terraform ---"
 
 # Initialize Terraform (if not already initialized)
 terraform init -reconfigure
