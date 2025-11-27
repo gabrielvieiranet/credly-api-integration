@@ -37,6 +37,11 @@ aws --endpoint-url=$ENDPOINT_URL dynamodb delete-table --table-name $METADATA_TA
 echo "Deleting secret: $SECRET_NAME..."
 aws --endpoint-url=$ENDPOINT_URL secretsmanager delete-secret --secret-id $SECRET_NAME --force-delete-without-recovery 2>/dev/null || true
 
+# Clean Terraform state to avoid inconsistencies
+echo "Cleaning Terraform state..."
+rm -f "$INFRA_DIR/terraform.tfstate"
+rm -f "$INFRA_DIR/terraform.tfstate.backup"
+
 echo "Cleanup complete!"
 sleep 2
 
