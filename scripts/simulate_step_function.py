@@ -124,18 +124,50 @@ def simulate_step_function(load_type: str, mode: str, max_pages: int = 2):
             break
 
 
+import argparse
+
+
 def main():
+    parser = argparse.ArgumentParser(description="Simulate Step Functions execution.")
+    parser.add_argument(
+        "--load-type",
+        choices=["badges", "templates", "all"],
+        default="all",
+        help="Type of load to simulate (default: all)",
+    )
+    parser.add_argument(
+        "--mode",
+        choices=["daily", "historical"],
+        default="daily",
+        help="Ingestion mode (default: daily)",
+    )
+    parser.add_argument(
+        "--max-pages",
+        type=int,
+        default=2,
+        help="Maximum number of pages to process (default: 2)",
+    )
+
+    args = parser.parse_args()
+
     print("\n🚀 Step Functions Local Simulator")
     print("This script simulates Step Functions pagination loop\n")
 
     setup_local_secret()
 
-    # Simulate daily badges ingestion
-    simulate_step_function(
-        load_type="badges",
-        mode="daily",
-        max_pages=2,  # Local limit for testing
-    )
+    if args.load_type in ["badges", "all"]:
+        simulate_step_function(
+            load_type="badges",
+            mode=args.mode,
+            max_pages=args.max_pages,
+        )
+
+    if args.load_type in ["templates", "all"]:
+        simulate_step_function(
+            load_type="templates",
+            mode=args.mode,
+            max_pages=args.max_pages,
+        )
 
 
 if __name__ == "__main__":

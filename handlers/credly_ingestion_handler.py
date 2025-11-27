@@ -38,8 +38,7 @@ def lambda_handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         elif load_type == "templates":
             # Templates still process all pages internally for hash validation
             # TODO: Refactor templates to support pagination
-            credly_templates_service.process(mode)
-            result = {"records_processed": 0, "next_page": None}
+            result = credly_templates_service.process(mode)
         else:
             raise ValueError(f"Unknown load_type: {load_type}")
 

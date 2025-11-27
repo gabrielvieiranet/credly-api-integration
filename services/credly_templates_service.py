@@ -62,7 +62,7 @@ class CredlyTemplatesService:
 
         if stored_hash == current_hash:
             logger.info("No changes detected in templates. Skipping ingestion.")
-            return
+            return {"records_processed": 0, "next_page": None}
 
         logger.info(
             f"Changes detected (Old: {stored_hash}, New: {current_hash}). Starting full load."
@@ -110,6 +110,8 @@ class CredlyTemplatesService:
                 "record_count": len(all_templates),
             },
         )
+
+        return {"records_processed": len(all_templates), "next_page": None}
 
     def _map_template(self, item: Dict[str, Any]) -> Dict[str, str]:
         owner = item.get("owner", {})
