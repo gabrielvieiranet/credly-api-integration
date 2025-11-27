@@ -60,13 +60,11 @@ if [ ! -f "terraform.tfvars" ]; then
 fi
 
 # Check for override.tf (LocalStack configuration)
-if [ ! -f "override.tf" ]; then
-    echo "Creating override.tf from example..."
-    if [ -f "override.tf.example" ]; then
-        cp override.tf.example override.tf
-    else
-        echo "Warning: override.tf.example not found. LocalStack setup might fail."
-    fi
+if [ -f "override.tf.example" ]; then
+    echo "Updating override.tf from example..."
+    cp override.tf.example override.tf
+else
+    echo "Warning: override.tf.example not found. LocalStack setup might fail."
 fi
 
 echo ""
