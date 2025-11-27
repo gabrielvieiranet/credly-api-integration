@@ -5,6 +5,16 @@
 # To use:
 # 1. Copy this file to `override.tf` (which is gitignored)
 # 2. Adjust endpoints if needed for your LocalStack setup
+#
+# Note: Use LOCALSTACK_ENDPOINT environment variable to override the default
+# Example: export LOCALSTACK_ENDPOINT="http://192.168.1.100:4566"
+
+locals {
+  localstack_endpoint = coalesce(
+    try(var.localstack_endpoint, null),
+    "http://localhost:4566"
+  )
+}
 
 provider "aws" {
   region = var.aws_region
@@ -13,30 +23,31 @@ provider "aws" {
   secret_key                  = "test"
   skip_credentials_validation = true
   skip_metadata_api_check     = true
+  skip_requesting_account_id  = true
   s3_use_path_style           = true
 
   endpoints {
-    apigateway     = "http://localhost:4566"
-    cloudformation = "http://localhost:4566"
-    cloudwatch     = "http://localhost:4566"
-    dynamodb       = "http://localhost:4566"
-    ec2            = "http://localhost:4566"
-    es             = "http://localhost:4566"
-    elasticache    = "http://localhost:4566"
-    firehose       = "http://localhost:4566"
-    iam            = "http://localhost:4566"
-    kinesis        = "http://localhost:4566"
-    lambda         = "http://localhost:4566"
-    rds            = "http://localhost:4566"
-    redshift       = "http://localhost:4566"
-    route53        = "http://localhost:4566"
-    s3             = "http://localhost:4566"
-    secretsmanager = "http://localhost:4566"
-    ses            = "http://localhost:4566"
-    sns            = "http://localhost:4566"
-    sqs            = "http://localhost:4566"
-    ssm            = "http://localhost:4566"
-    stepfunctions  = "http://localhost:4566"
-    sts            = "http://localhost:4566"
+    apigateway     = local.localstack_endpoint
+    cloudformation = local.localstack_endpoint
+    cloudwatch     = local.localstack_endpoint
+    dynamodb       = local.localstack_endpoint
+    ec2            = local.localstack_endpoint
+    es             = local.localstack_endpoint
+    elasticache    = local.localstack_endpoint
+    firehose       = local.localstack_endpoint
+    iam            = local.localstack_endpoint
+    kinesis        = local.localstack_endpoint
+    lambda         = local.localstack_endpoint
+    rds            = local.localstack_endpoint
+    redshift       = local.localstack_endpoint
+    route53        = local.localstack_endpoint
+    s3             = local.localstack_endpoint
+    secretsmanager = local.localstack_endpoint
+    ses            = local.localstack_endpoint
+    sns            = local.localstack_endpoint
+    sqs            = local.localstack_endpoint
+    ssm            = local.localstack_endpoint
+    stepfunctions  = local.localstack_endpoint
+    sts            = local.localstack_endpoint
   }
 }

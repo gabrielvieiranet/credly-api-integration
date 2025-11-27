@@ -61,6 +61,12 @@ variable "enable_compute" {
   default     = true
 }
 
+variable "localstack_endpoint" {
+  description = "LocalStack endpoint URL (only used when override.tf is present)"
+  type        = string
+  default     = "http://localhost:4566"
+}
+
 variable "tags" {
   description = "Common tags"
   type        = map(string)
