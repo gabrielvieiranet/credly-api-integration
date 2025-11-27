@@ -13,13 +13,6 @@ if [ -z "$TOKEN" ]; then
 fi
 ENDPOINT_URL="http://localhost:4566"
 
-# Disable proxy for LocalStack calls (prevents 502 errors on Linux)
-export NO_PROXY="localhost,127.0.0.1"
-unset HTTP_PROXY
-unset HTTPS_PROXY
-unset http_proxy
-unset https_proxy
-
 echo "Updating secret in LocalStack..."
 aws --endpoint-url=$ENDPOINT_URL secretsmanager put-secret-value \
     --secret-id my-app/credentials \
