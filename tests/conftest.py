@@ -24,3 +24,11 @@ def mock_secrets_client(mocker):
 @pytest.fixture
 def mock_http_client(mocker):
     return mocker.patch("src.clients.http_client.http_client")
+
+
+@pytest.fixture
+def mock_boto3_client(mocker):
+    """Mock boto3 client to prevent actual AWS calls"""
+    mock_client = mocker.patch("boto3.client")
+    mock_resource = mocker.patch("boto3.resource")
+    return mock_client, mock_resource

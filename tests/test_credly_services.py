@@ -28,7 +28,11 @@ def mock_dynamodb_client(mocker):
     return mocker.patch("src.services.credly_templates_service.dynamodb_client")
 
 
-def test_badges_mapping(mock_credly_client, mock_s3_writer):
+def test_badges_mapping(mock_credly_client, mock_s3_writer, mocker):
+    # Mock DynamoDB to avoid actual calls
+    mock_dynamodb = mocker.patch("src.clients.dynamodb_client.dynamodb_client")
+    mock_dynamodb.get_metadata.return_value = {}  # No watermark
+
     # Mock data
     mock_data = [
         {
@@ -40,7 +44,8 @@ def test_badges_mapping(mock_credly_client, mock_s3_writer):
             "issued_at": "2023-01-01",
         }
     ]
-    mock_credly_client.get_badges.return_value = [mock_data]
+    # Return tuple: (items, next_page_url)
+    mock_credly_client.get_badges.return_value = (mock_data, None)
 
     service = CredlyBadgesService()
     service.process("daily")
@@ -68,16 +73,18 @@ def test_templates_hash_validation(
             "name": "Template 1",
             "updated_at": "2023-01-01T00:00:00",
             "skills": [{"name": "Python"}, {"name": "AWS"}],
+            "owner": {"id": 1, "name": "Org"},
             "badge_template_activities": [{"id": "a1", "title": "Activity 1"}],
         }
     ]
-    mock_credly_client_templates.get_templates.return_value = [mock_data]
+    # Return tuple: (items, next_page_url)
+    mock_credly_client_templates.get_templates.return_value = (mock_data, None)
 
     # Case 1: Hash mismatch (should write)
     mock_dynamodb_client.get_metadata.return_value = {"payload_hash": "old_hash"}
 
     service = CredlyTemplatesService()
-    service.process("daily")
+    result = service.process("daily")
 
     # Check calls
     assert mock_s3_writer_templates.write_parquet.call_count >= 2
@@ -87,6 +94,7 @@ def test_templates_hash_validation(
     args, _ = mock_dynamodb_client.update_metadata.call_args
     assert args[0] == "badges_templates"
     assert "payload_hash" in args[1]
+    assert result["records_processed"] == 1
 
     # Case 2: Hash match (should skip)
     # Calculate expected hash for mock data
@@ -98,8 +106,9 @@ def test_templates_hash_validation(
     mock_s3_writer_templates.reset_mock()
     mock_dynamodb_client.reset_mock()
 
-    service.process("daily")
+    result = service.process("daily")
 
     # Should NOT write to S3 or update DynamoDB
     mock_s3_writer_templates.write_parquet.assert_not_called()
     mock_dynamodb_client.update_metadata.assert_not_called()
+    assert result["records_processed"] == 0
