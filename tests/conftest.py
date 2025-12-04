@@ -1,7 +1,10 @@
 import os
-from unittest.mock import MagicMock
+import sys
 
 import pytest
+
+# Add app directory to sys.path so 'src' module can be found
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "app")))
 
 
 @pytest.fixture(autouse=True)
@@ -13,11 +16,11 @@ def mock_env_vars(monkeypatch):
 
 @pytest.fixture
 def mock_secrets_client(mocker):
-    mock = mocker.patch("clients.secrets_manager.secrets_client")
+    mock = mocker.patch("src.clients.secrets_manager.secrets_client")
     mock.get_secret.return_value = {"api_token": "static_test_token"}
     return mock
 
 
 @pytest.fixture
 def mock_http_client(mocker):
-    return mocker.patch("clients.http_client.http_client")
+    return mocker.patch("src.clients.http_client.http_client")

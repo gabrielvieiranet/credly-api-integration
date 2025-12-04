@@ -1,32 +1,31 @@
 import pytest
-
-from services.credly_badges_service import CredlyBadgesService
-from services.credly_templates_service import CredlyTemplatesService
+from src.services.credly_badges_service import CredlyBadgesService
+from src.services.credly_templates_service import CredlyTemplatesService
 
 
 @pytest.fixture
 def mock_credly_client(mocker):
-    return mocker.patch("services.credly_badges_service.credly_client")
+    return mocker.patch("src.services.credly_badges_service.credly_client")
 
 
 @pytest.fixture
 def mock_credly_client_templates(mocker):
-    return mocker.patch("services.credly_templates_service.credly_client")
+    return mocker.patch("src.services.credly_templates_service.credly_client")
 
 
 @pytest.fixture
 def mock_s3_writer(mocker):
-    return mocker.patch("services.credly_badges_service.s3_writer")
+    return mocker.patch("src.services.credly_badges_service.s3_writer")
 
 
 @pytest.fixture
 def mock_s3_writer_templates(mocker):
-    return mocker.patch("services.credly_templates_service.s3_writer")
+    return mocker.patch("src.services.credly_templates_service.s3_writer")
 
 
 @pytest.fixture
 def mock_dynamodb_client(mocker):
-    return mocker.patch("services.credly_templates_service.dynamodb_client")
+    return mocker.patch("src.services.credly_templates_service.dynamodb_client")
 
 
 def test_badges_mapping(mock_credly_client, mock_s3_writer):
