@@ -1,9 +1,9 @@
 from typing import Any, Dict
 
-from services.credly_badges_service import credly_badges_service
-from services.credly_templates_service import credly_templates_service
-from utils.logger import logger
-from utils.observability import observability
+from src.services.credly_badges_service import credly_badges_service
+from src.services.credly_templates_service import credly_templates_service
+from src.utils.logger import logger
+from src.utils.observability import observability
 
 
 def lambda_handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:

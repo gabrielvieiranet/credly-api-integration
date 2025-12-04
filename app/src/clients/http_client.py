@@ -2,7 +2,7 @@ import requests
 from requests.adapters import HTTPAdapter
 from urllib3.util.retry import Retry
 
-from config.settings import settings
+from src.config.settings import settings
 
 
 class HttpClient:

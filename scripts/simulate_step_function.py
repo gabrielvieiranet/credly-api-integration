@@ -11,8 +11,10 @@ from datetime import datetime
 
 from dotenv import load_dotenv
 
-# Add project root to sys.path
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
+# Add project root and app directory to sys.path
+project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+sys.path.append(project_root)
+sys.path.append(os.path.join(project_root, "app"))
 
 load_dotenv()
 
@@ -36,7 +38,8 @@ os.environ["METADATA_TABLE_NAME"] = os.getenv(
     "METADATA_TABLE_NAME", "credly-ingestion-metadata-dev"
 )
 
-from handlers.credly_ingestion_handler import lambda_handler
+from lambda_function import lambda_handler
+
 from scripts.run_lambda_local import setup_local_secret
 
 

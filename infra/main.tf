@@ -188,7 +188,7 @@ resource "aws_lambda_function" "credly_ingestion" {
   filename         = "${path.module}/lambda_dummy.zip"
   source_code_hash = fileexists("${path.module}/lambda_dummy.zip") ? filebase64sha256("${path.module}/lambda_dummy.zip") : base64sha256("dummy")
 
-  handler     = "handlers.credly_ingestion_handler.lambda_handler"
+  handler     = "lambda_function.lambda_handler"
   runtime     = "python3.12"
   timeout     = var.lambda_timeout
   memory_size = var.lambda_memory_size

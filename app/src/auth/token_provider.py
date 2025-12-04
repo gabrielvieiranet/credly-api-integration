@@ -5,9 +5,9 @@ from typing import Dict, Optional
 
 import requests
 
-from clients.secrets_manager import secrets_client
-from config.settings import settings
-from utils.logger import logger
+from src.clients.secrets_manager import secrets_client
+from src.config.settings import settings
+from src.utils.logger import logger
 
 
 class CredlyAuthProvider(ABC):

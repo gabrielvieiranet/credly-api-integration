@@ -5,8 +5,8 @@ from typing import Any, Dict, List
 
 import boto3
 
-from config.settings import settings
-from utils.logger import logger
+from src.config.settings import settings
+from src.utils.logger import logger
 
 
 class S3Writer:

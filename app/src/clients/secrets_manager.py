@@ -4,8 +4,8 @@ from typing import Any, Dict
 
 import boto3
 
-from config.settings import settings
-from utils.logger import logger
+from src.config.settings import settings
+from src.utils.logger import logger
 
 
 class SecretsManagerClient:

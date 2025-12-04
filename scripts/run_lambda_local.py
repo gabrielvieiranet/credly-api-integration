@@ -2,8 +2,10 @@ import json
 import os
 import sys
 
-# Add project root to sys.path
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
+# Add project root and app directory to sys.path
+project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+sys.path.append(project_root)
+sys.path.append(os.path.join(project_root, "app"))
 
 import boto3
 from dotenv import load_dotenv
@@ -28,7 +30,7 @@ os.environ["CREDLY_ORG_ID"] = os.getenv("CREDLY_ORG_ID", "")
 os.environ["S3_BUCKET_NAME"] = os.getenv("S3_BUCKET_NAME", "my-datalake-bucket")
 
 # Import handler AFTER env vars are set so settings.py picks them up
-from handlers.credly_ingestion_handler import lambda_handler
+from lambda_function import lambda_handler
 
 
 def setup_local_secret():

@@ -1,9 +1,9 @@
 import datetime
 from typing import Any, Dict
 
-from clients.credly_client import credly_client
-from utils.logger import logger
-from utils.s3_writer import s3_writer
+from src.clients.credly_client import credly_client
+from src.utils.logger import logger
+from src.utils.s3_writer import s3_writer
 
 
 class CredlyBadgesService:
@@ -103,13 +103,13 @@ class CredlyBadgesService:
 
     def _get_watermark(self) -> dict:
         """Retrieves the last watermark from DynamoDB."""
-        from clients.dynamodb_client import dynamodb_client
+        from src.clients.dynamodb_client import dynamodb_client
 
         return dynamodb_client.get_metadata("badges_watermark")
 
     def _update_watermark(self, timestamp: str):
         """Updates the watermark in DynamoDB."""
-        from clients.dynamodb_client import dynamodb_client
+        from src.clients.dynamodb_client import dynamodb_client
 
         dynamodb_client.update_metadata(
             "badges_watermark",

@@ -1,10 +1,10 @@
 from typing import Any, Dict
 
-from auth.token_provider import get_token_provider
-from clients.http_client import http_client
-from config.settings import settings
-from utils.logger import logger
-from utils.observability import observability
+from src.auth.token_provider import get_token_provider
+from src.clients.http_client import http_client
+from src.config.settings import settings
+from src.utils.logger import logger
+from src.utils.observability import observability
 
 
 class CredlyClient:

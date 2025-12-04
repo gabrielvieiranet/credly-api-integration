@@ -2,10 +2,10 @@ import datetime
 import hashlib
 from typing import Any, Dict
 
-from clients.credly_client import credly_client
-from clients.dynamodb_client import dynamodb_client
-from utils.logger import logger
-from utils.s3_writer import s3_writer
+from src.clients.credly_client import credly_client
+from src.clients.dynamodb_client import dynamodb_client
+from src.utils.logger import logger
+from src.utils.s3_writer import s3_writer
 
 
 class CredlyTemplatesService:

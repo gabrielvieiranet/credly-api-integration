@@ -2,7 +2,7 @@ import json
 import logging
 import sys
 
-from config.settings import settings
+from src.config.settings import settings
 
 
 class JsonFormatter(logging.Formatter):

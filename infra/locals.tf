@@ -22,4 +22,6 @@ locals {
     METADATA_TABLE_NAME   = local.dynamodb_metadata_table_name
     WATERMARK_OVERLAP_MIN = var.watermark_overlap_minutes
   }
+
+  localstack_endpoint = var.localstack_endpoint
 }
