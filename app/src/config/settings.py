@@ -48,11 +48,6 @@ class Settings:
     def MAX_RETRIES(self) -> int:
         return int(os.getenv("MAX_RETRIES", "3"))
 
-    # DynamoDB
-    @property
-    def METADATA_TABLE_NAME(self) -> str:
-        return os.getenv("METADATA_TABLE_NAME", "")
-
     # Credly Specifics
     @property
     def CREDLY_BASE_URL(self) -> str:

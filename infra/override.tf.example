@@ -30,7 +30,6 @@ provider "aws" {
     apigateway     = local.localstack_endpoint
     cloudformation = local.localstack_endpoint
     cloudwatch     = local.localstack_endpoint
-    dynamodb       = local.localstack_endpoint
     ec2            = local.localstack_endpoint
     es             = local.localstack_endpoint
     elasticache    = local.localstack_endpoint

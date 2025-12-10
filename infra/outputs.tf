@@ -12,10 +12,6 @@ output "secrets_manager_secret_arn" {
   value       = aws_secretsmanager_secret.credly_credentials.arn
 }
 
-output "metadata_table_name" {
-  description = "DynamoDB metadata table name (watermarks + payload hashes)"
-  value       = aws_dynamodb_table.table_metadata.name
-}
 
 output "lambda_function_arn" {
   description = "Lambda function ARN"

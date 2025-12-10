@@ -31,10 +31,9 @@ uv run python "$SCRIPT_DIR/simulate_step_function.py" --load-type badges --mode 
 # Step 3: Verify Watermark Created
 echo ""
 echo "Step 3: Verifying Watermark Creation..."
-WATERMARK=$(aws --endpoint-url=http://localhost:4566 --region us-east-1 dynamodb get-item \
-    --table-name credly-ingestion-metadata-dev \
-    --key '{"table_name": {"S": "badges_watermark"}}' \
-    --query 'Item.watermark.S' --output text)
+WATERMARK=$(aws --endpoint-url=http://localhost:4566 --region us-east-1 ssm get-parameter \
+    --name "/credly/watermark/badges" \
+    --query "Parameter.Value" --output text | jq -r .watermark)
 
 if [ "$WATERMARK" == "None" ] || [ -z "$WATERMARK" ]; then
     echo "✗ Watermark NOT found after first run!"
@@ -52,10 +51,9 @@ uv run python "$SCRIPT_DIR/simulate_step_function.py" --load-type badges --mode 
 # Step 5: Verify Watermark Updated
 echo ""
 echo "Step 5: Verifying Watermark Update..."
-NEW_WATERMARK=$(aws --endpoint-url=http://localhost:4566 --region us-east-1 dynamodb get-item \
-    --table-name credly-ingestion-metadata-dev \
-    --key '{"table_name": {"S": "badges_watermark"}}' \
-    --query 'Item.watermark.S' --output text)
+NEW_WATERMARK=$(aws --endpoint-url=http://localhost:4566 --region us-east-1 ssm get-parameter \
+    --name "/credly/watermark/badges" \
+    --query "Parameter.Value" --output text | jq -r .watermark)
 
 if [ "$NEW_WATERMARK" == "$WATERMARK" ]; then
     echo "✗ Watermark did NOT update!"

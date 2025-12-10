@@ -29,9 +29,6 @@ METADATA_TABLE="credly-ingestion-metadata-dev"
 echo "Deleting S3 bucket: s3://$BUCKET_NAME..."
 aws --endpoint-url=$ENDPOINT_URL s3 rb s3://$BUCKET_NAME --force 2>/dev/null || true
 
-# Delete DynamoDB table
-echo "Deleting DynamoDB table: $METADATA_TABLE..."
-aws --endpoint-url=$ENDPOINT_URL dynamodb delete-table --table-name $METADATA_TABLE 2>/dev/null || true
 
 # Delete Secrets Manager secret
 echo "Deleting secret: $SECRET_NAME..."
@@ -94,7 +91,7 @@ echo "========================================="
 echo "All resources created via Terraform:"
 echo "  - S3 Bucket: s3://$BUCKET_NAME"
 echo "  - Secrets Manager: $SECRET_NAME"
-echo "  - DynamoDB Table: $METADATA_TABLE (watermarks + payload hashes)"
+echo "  - SSM Parameter Store (watermarks + payload hashes)"
 echo "  - Lambda Function"
 echo "  - Step Functions"
 echo ""

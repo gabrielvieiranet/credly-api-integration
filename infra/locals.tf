@@ -8,7 +8,6 @@ locals {
     }
   )
 
-  dynamodb_metadata_table_name = "${var.project_name}-metadata-${var.environment}"
 
   step_function_name = "${var.project_name}-orchestrator-${var.environment}"
 
@@ -19,7 +18,6 @@ locals {
     CREDLY_ORG_ID         = var.credly_org_id
     CREDLY_BASE_URL       = "https://api.credly.com/v1"
     SECRETS_MANAGER_KEY   = var.secrets_manager_key
-    METADATA_TABLE_NAME   = local.dynamodb_metadata_table_name
     WATERMARK_OVERLAP_MIN = var.watermark_overlap_minutes
   }
 
