@@ -37,33 +37,6 @@ resource "aws_secretsmanager_secret_version" "credly_credentials" {
   }
 }
 
-# ============================================
-# DynamoDB Tables
-# ============================================
-
-# Metadata table for watermarks and payload hashes
-resource "aws_dynamodb_table" "table_metadata" {
-  name         = local.dynamodb_metadata_table_name
-  billing_mode = "PAY_PER_REQUEST"
-  hash_key     = "table_name"
-
-  attribute {
-    name = "table_name"
-    type = "S"
-  }
-
-  ttl {
-    attribute_name = "ttl"
-    enabled        = false
-  }
-
-  tags = merge(
-    local.common_tags,
-    {
-      Name = local.dynamodb_metadata_table_name
-    }
-  )
-}
 
 # ============================================
 # IAM Roles and Policies
@@ -112,13 +85,11 @@ resource "aws_iam_role_policy" "lambda" {
       {
         Effect = "Allow"
         Action = [
-          "dynamodb:GetItem",
-          "dynamodb:PutItem",
-          "dynamodb:UpdateItem",
-          "dynamodb:Query",
-          "dynamodb:Scan"
+          "ssm:GetParameter",
+          "ssm:PutParameter",
+          "ssm:GetParameters"
         ]
-        Resource = aws_dynamodb_table.table_metadata.arn
+        Resource = "arn:aws:ssm:${var.aws_region}:*:parameter/credly/*"
       },
       {
         Effect = "Allow"

@@ -3,7 +3,6 @@ import hashlib
 from typing import Any, Dict
 
 from src.clients.credly_client import credly_client
-from src.clients.dynamodb_client import dynamodb_client
 from src.utils.logger import logger
 from src.utils.s3_writer import s3_writer
 
@@ -57,7 +56,9 @@ class CredlyTemplatesService:
         current_hash = hashlib.sha256("".join(hash_payload).encode()).hexdigest()
 
         # Check against stored hash
-        metadata = dynamodb_client.get_metadata("badges_templates")
+        from src.clients.ssm_client import ssm_client
+
+        metadata = ssm_client.get_parameter("/credly/state/templates")
         stored_hash = metadata.get("payload_hash")
 
         if stored_hash == current_hash:
@@ -102,13 +103,16 @@ class CredlyTemplatesService:
             part_number += 1
 
         # Update metadata
-        dynamodb_client.update_metadata(
-            "badges_templates",
+        from src.clients.ssm_client import ssm_client
+
+        ssm_client.put_parameter(
+            "/credly/state/templates",
             {
                 "payload_hash": current_hash,
                 "last_updated_at": datetime.datetime.now().isoformat(),
                 "record_count": len(all_templates),
             },
+            description="State and Hash for Credly Templates",
         )
 
         return {"records_processed": len(all_templates), "next_page": None}

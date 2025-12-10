@@ -24,14 +24,14 @@ def mock_s3_writer_templates(mocker):
 
 
 @pytest.fixture
-def mock_dynamodb_client(mocker):
-    return mocker.patch("src.services.credly_templates_service.dynamodb_client")
+def mock_ssm_client(mocker):
+    return mocker.patch("src.clients.ssm_client.ssm_client")
 
 
 def test_badges_mapping(mock_credly_client, mock_s3_writer, mocker):
-    # Mock DynamoDB to avoid actual calls
-    mock_dynamodb = mocker.patch("src.clients.dynamodb_client.dynamodb_client")
-    mock_dynamodb.get_metadata.return_value = {}  # No watermark
+    # Mock SSM to avoid actual calls
+    mock_ssm = mocker.patch("src.clients.ssm_client.ssm_client")
+    mock_ssm.get_parameter.return_value = {}  # No watermark
 
     # Mock data
     mock_data = [
@@ -65,7 +65,7 @@ def test_badges_mapping(mock_credly_client, mock_s3_writer, mocker):
 
 
 def test_templates_hash_validation(
-    mock_credly_client_templates, mock_s3_writer_templates, mock_dynamodb_client
+    mock_credly_client_templates, mock_s3_writer_templates, mock_ssm_client
 ):
     mock_data = [
         {
@@ -81,18 +81,18 @@ def test_templates_hash_validation(
     mock_credly_client_templates.get_templates.return_value = (mock_data, None)
 
     # Case 1: Hash mismatch (should write)
-    mock_dynamodb_client.get_metadata.return_value = {"payload_hash": "old_hash"}
+    mock_ssm_client.get_parameter.return_value = {"payload_hash": "old_hash"}
 
     service = CredlyTemplatesService()
     result = service.process("daily")
 
     # Check calls
     assert mock_s3_writer_templates.write_parquet.call_count >= 2
-    mock_dynamodb_client.update_metadata.assert_called_once()
+    mock_ssm_client.put_parameter.assert_called_once()
 
     # Verify update metadata call
-    args, _ = mock_dynamodb_client.update_metadata.call_args
-    assert args[0] == "badges_templates"
+    args, kwargs = mock_ssm_client.put_parameter.call_args
+    assert args[0] == "/credly/state/templates"
     assert "payload_hash" in args[1]
     assert result["records_processed"] == 1
 
@@ -102,13 +102,13 @@ def test_templates_hash_validation(
 
     expected_hash = hashlib.sha256("100-2023-01-01T00:00:00".encode()).hexdigest()
 
-    mock_dynamodb_client.get_metadata.return_value = {"payload_hash": expected_hash}
+    mock_ssm_client.get_parameter.return_value = {"payload_hash": expected_hash}
     mock_s3_writer_templates.reset_mock()
-    mock_dynamodb_client.reset_mock()
+    mock_ssm_client.reset_mock()
 
     result = service.process("daily")
 
-    # Should NOT write to S3 or update DynamoDB
+    # Should NOT write to S3 or update SSM
     mock_s3_writer_templates.write_parquet.assert_not_called()
-    mock_dynamodb_client.update_metadata.assert_not_called()
+    mock_ssm_client.put_parameter.assert_not_called()
     assert result["records_processed"] == 0

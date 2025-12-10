@@ -102,18 +102,19 @@ class CredlyBadgesService:
         return {"records_processed": len(items), "next_page": next_page_url}
 
     def _get_watermark(self) -> dict:
-        """Retrieves the last watermark from DynamoDB."""
-        from src.clients.dynamodb_client import dynamodb_client
+        """Retrieves the last watermark from SSM."""
+        from src.clients.ssm_client import ssm_client
 
-        return dynamodb_client.get_metadata("badges_watermark")
+        return ssm_client.get_parameter("/credly/watermark/badges")
 
     def _update_watermark(self, timestamp: str):
-        """Updates the watermark in DynamoDB."""
-        from src.clients.dynamodb_client import dynamodb_client
+        """Updates the watermark in SSM."""
+        from src.clients.ssm_client import ssm_client
 
-        dynamodb_client.update_metadata(
-            "badges_watermark",
+        ssm_client.put_parameter(
+            "/credly/watermark/badges",
             {"watermark": timestamp, "updated_at": datetime.datetime.now().isoformat()},
+            description="Last processed watermark for Credly Badges",
         )
 
     def _map_badge(self, item: Dict[str, Any]) -> Dict[str, str]:
